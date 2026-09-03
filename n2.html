@@ -1,0 +1,495 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Physiotherapy Clinic</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel Standalone for JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Helper components for Lucide icons since they load via global script
+    const Icon = ({ name, className = "w-5 h-5", ...props }) => {
+      useEffect(() => {
+        lucide.createIcons();
+      }, [name]);
+      return <i data-lucide={name} className={className} {...props}></i>;
+    };
+
+    // --- ENHANCED MOCK DATA ---
+    const INITIAL_VISITS = [
+      {
+        id: 1,
+        patientAge: 65,
+        gender: 'Male',
+        condition: 'Post-op TKR (Total Knee Replacement)',
+        address: 'Lokhandwala Complex, Andheri West',
+        city: 'Mumbai',
+        payout: 700,
+        date: 'Today',
+        time: '10:00 AM',
+        distance: '3.2 km',
+        status: 'available',
+        sessions: 10,
+        history: 'Surgery done 2 weeks ago. Complains of stiffness and mild swelling. Needs aggressive ROM exercises.',
+        equipment: ['Theraband', 'Goniometer']
+      },
+      {
+        id: 2,
+        patientAge: 45,
+        gender: 'Female',
+        condition: 'Frozen Shoulder',
+        address: 'Vasant Vihar, Pokhran Road 2',
+        city: 'Thane',
+        payout: 600,
+        date: 'Tomorrow',
+        time: '04:30 PM',
+        distance: '5.1 km',
+        status: 'available',
+        sessions: 5,
+        history: 'Diabetic patient. Stage 2 adhesive capsulitis. Severe pain at night.',
+        equipment: ['IFT Machine', 'Hot Pack']
+      },
+      {
+        id: 3,
+        patientAge: 72,
+        gender: 'Male',
+        condition: 'Stroke Rehabilitation (Hemiplegia)',
+        address: 'Sector 17, Vashi',
+        city: 'Navi Mumbai',
+        payout: 1000,
+        date: 'Today',
+        time: '06:00 PM',
+        distance: '12.4 km',
+        status: 'available',
+        sessions: 15,
+        history: 'Right side hemiparesis. Bedridden for 1 month. Needs gait training and bed mobility exercises.',
+        equipment: ['Walker', 'BP Apparatus']
+      },
+      {
+        id: 4,
+        patientAge: 28,
+        gender: 'Male',
+        condition: 'Sports Injury - ACL Tear',
+        address: 'Bandra Kurla Complex (BKC)',
+        city: 'Mumbai',
+        payout: 800,
+        date: 'Tomorrow',
+        time: '08:00 AM',
+        distance: '8.0 km',
+        status: 'available',
+        sessions: 8,
+        history: 'Grade 2 tear. Conservative management. Focus on VMO strengthening and proprioception.',
+        equipment: ['Resistance Bands', 'Balance Board']
+      },
+      {
+        id: 5,
+        patientAge: 55,
+        gender: 'Female',
+        condition: 'Chronic Low Back Pain',
+        address: 'Ghodbunder Road, Majiwada',
+        city: 'Thane',
+        payout: 650,
+        date: 'Today',
+        time: '02:00 PM',
+        distance: '4.5 km',
+        status: 'available',
+        sessions: 7,
+        history: 'Radiating pain to left leg. L4-L5 disc bulge. Pain increases on prolonged standing.',
+        equipment: ['TENS Machine', 'Towel/Mat']
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('home');
+      const [visits, setVisits] = useState(INITIAL_VISITS);
+      const [selectedCity, setSelectedCity] = useState('All');
+      const [toastMessage, setToastMessage] = useState('');
+      const [darkMode, setDarkMode] = useState(false);
+      const [expandedId, setExpandedId] = useState(null);
+
+      useEffect(() => {
+        lucide.createIcons();
+      }, [activeTab, expandedId, visits, darkMode, selectedCity]);
+
+      const cities = ['All', 'Mumbai', 'Thane', 'Navi Mumbai'];
+
+      const availableVisits = visits.filter(v => v.status === 'available');
+      const acceptedVisits = visits.filter(v => v.status === 'accepted');
+
+      const filteredVisits = selectedCity === 'All' 
+        ? availableVisits 
+        : availableVisits.filter(v => v.city === selectedCity);
+
+      const handleAcceptVisit = (id) => {
+        setVisits(visits.map(visit => 
+          visit.id === id ? { ...visit, status: 'accepted' } : visit
+        ));
+        showToast("Visit Accepted successfully!");
+        setExpandedId(null);
+      };
+
+      const showToast = (message) => {
+        setToastMessage(message);
+        setTimeout(() => {
+          setToastMessage('');
+        }, 3000);
+      };
+
+      const toggleExpand = (id) => {
+        setExpandedId(expandedId === id ? null : id);
+      };
+
+      return (
+        <div className={`${darkMode ? 'dark' : ''} min-h-screen bg-slate-100 dark:bg-slate-950 font-sans flex justify-center transition-colors duration-300`}>
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col transition-colors duration-300">
+            
+            {/* BRANDED HEADER */}
+            <header className="bg-teal-700 dark:bg-teal-900 text-white p-4 pb-5 rounded-b-3xl shadow-lg z-10 sticky top-0 border-b-4 border-amber-500 transition-colors duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white p-1.5 rounded-full shadow-md">
+                    <div className="bg-green-600 rounded-full p-1.5 flex items-center justify-center">
+                      <i data-lucide="activity" className="w-5 h-5 text-white"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-black tracking-wide leading-tight">NEXUS</h1>
+                    <p className="text-teal-100 text-[10px] uppercase font-bold tracking-widest">Physiotherapy Clinic</p>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="bg-teal-600 dark:bg-teal-800 p-2.5 rounded-full hover:bg-teal-500 transition-colors border border-teal-500 dark:border-teal-700 flex items-center justify-center text-white"
+                >
+                  <i data-lucide={darkMode ? "sun" : "moon"} className="w-5 h-5"></i>
+                </button>
+              </div>
+            </header>
+
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-y-auto pb-24 p-4 scroll-smooth text-slate-800 dark:text-slate-200">
+              
+              {/* TOAST NOTIFICATION */}
+              {toastMessage && (
+                <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-green-600 dark:bg-green-500 text-white px-5 py-2.5 rounded-full shadow-xl text-sm font-bold flex items-center gap-2 z-50 animate-bounce">
+                  <i data-lucide="check-circle" className="w-5 h-5"></i>
+                  {toastMessage}
+                </div>
+              )}
+
+              {/* ================= HOME TAB - JOB BOARD ================= */}
+              {activeTab === 'home' && (
+                <div className="animate-fade-in">
+                  <div className="mb-5 flex justify-between items-end">
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1">Visit Board</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Find patients near you</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold">Available</span>
+                      <p className="text-xl font-black text-teal-600 dark:text-teal-400">{filteredVisits.length}</p>
+                    </div>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
+                    <div className="flex items-center justify-center bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl text-slate-500 dark:text-slate-400 mr-1 shadow-inner">
+                      <i data-lucide="filter" className="w-4 h-4"></i>
+                    </div>
+                    {cities.map(city => (
+                      <button
+                        key={city}
+                        onClick={() => setSelectedCity(city)}
+                        className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                          selectedCity === city 
+                            ? 'bg-green-600 text-white shadow-md shadow-green-600/30 dark:shadow-none' 
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Detailed Visit Cards */}
+                  <div className="space-y-4">
+                    {filteredVisits.length === 0 ? (
+                      <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700">
+                        <i data-lucide="briefcase" className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold">No visits available.</p>
+                      </div>
+                    ) : (
+                      filteredVisits.map(visit => {
+                        const isExpanded = expandedId === visit.id;
+                        return (
+                          <div key={visit.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm transition-all">
+                            <div className="flex justify-between items-start mb-3">
+                              <span className="bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-teal-200 dark:border-teal-800">
+                                {visit.city}
+                              </span>
+                              <span className="text-lg font-black text-green-600 dark:text-green-500 flex items-center bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-lg">
+                                <i data-lucide="indian-rupee" className="w-4 h-4 mr-0.5"></i>
+                                {visit.payout}
+                                <span className="text-[10px] text-green-600/70 ml-1">/ses</span>
+                              </span>
+                            </div>
+                            
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2 leading-tight">{visit.condition}</h3>
+                            
+                            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 mb-4 font-medium">
+                              <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md"><i data-lucide="user" className="w-3.5 h-3.5"></i> {visit.patientAge}y • {visit.gender.charAt(0)}</span>
+                              <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md"><i data-lucide="calendar" className="w-3.5 h-3.5"></i> {visit.sessions} Ses.</span>
+                            </div>
+
+                            <div className="space-y-2.5 mb-4 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                              <p className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-2.5">
+                                <i data-lucide="map-pin" className="w-4 h-4 text-teal-600 dark:text-teal-500 mt-0.5 shrink-0"></i>
+                                <span className="leading-tight font-medium">{visit.address} <br/><span className="text-xs text-amber-600 dark:text-amber-500 font-bold">{visit.distance} away</span></span>
+                              </p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2.5 font-medium">
+                                <i data-lucide="clock" className="w-4 h-4 text-teal-600 dark:text-teal-500"></i>
+                                {visit.date} at {visit.time}
+                              </p>
+                            </div>
+
+                            {/* Expandable Details Section */}
+                            {isExpanded && (
+                              <div className="mb-4 pt-3 border-t border-slate-100 dark:border-slate-700 animate-fade-in text-sm">
+                                <div className="mb-3">
+                                  <span className="text-xs uppercase font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 mb-1"><i data-lucide="stethoscope" className="w-3 h-3"></i> Patient History</span>
+                                  <p className="text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">{visit.history}</p>
+                                </div>
+                                <div>
+                                  <span className="text-xs uppercase font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 mb-1"><i data-lucide="zap" className="w-3 h-3"></i> Required Equip.</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {visit.equipment.map((eq, i) => (
+                                      <span key={i} className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-2 py-1 rounded-md text-xs font-semibold border border-amber-200 dark:border-amber-800/50">{eq}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => toggleExpand(visit.id)}
+                                className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                              >
+                                {isExpanded ? <><i data-lucide="chevron-up" className="w-4 h-4"></i> Less</> : <><i data-lucide="chevron-down" className="w-4 h-4"></i> Details</>}
+                              </button>
+                              <button 
+                                onClick={() => handleAcceptVisit(visit.id)}
+                                className="flex-[2] bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 dark:shadow-none"
+                              >
+                                Accept Case
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ================= MY VISITS TAB ================= */}
+              {activeTab === 'schedule' && (
+                <div className="animate-fade-in">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1">My Schedule</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Manage your active cases</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {acceptedVisits.length === 0 ? (
+                      <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700">
+                        <i data-lucide="calendar" className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold">Your schedule is empty.</p>
+                      </div>
+                    ) : (
+                      acceptedVisits.map(visit => (
+                        <div key={visit.id} className="bg-white dark:bg-slate-800 border-l-4 border-l-green-500 border border-slate-200 dark:border-slate-700 rounded-r-2xl rounded-l-md p-4 shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400 px-3 py-1 rounded-bl-xl text-xs font-black flex items-center gap-1 tracking-wider uppercase">
+                            <i data-lucide="check" className="w-3 h-3"></i> Active
+                          </div>
+                          
+                          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 pr-20">{visit.condition}</h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{visit.patientAge}y • {visit.gender} • {visit.sessions} Sessions</p>
+                          
+                          <div className="space-y-2 mt-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl">
+                            <p className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-2">
+                              <i data-lucide="map-pin" className="w-4 h-4 text-teal-600 dark:text-teal-500 mt-0.5 shrink-0"></i>
+                              <span className="leading-tight font-medium">{visit.address}, {visit.city}</span>
+                            </p>
+                            <p className="text-sm flex items-center gap-2 font-bold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 w-fit px-2.5 py-1 rounded-md border border-teal-100 dark:border-teal-800">
+                              <i data-lucide="clock" className="w-4 h-4"></i>
+                              {visit.date} • {visit.time}
+                            </p>
+                          </div>
+
+                          <div className="mt-4 flex gap-2">
+                            <button className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                              <i data-lucide="map" className="w-4 h-4"></i> Map
+                            </button>
+                            <button className="flex-1 bg-green-100 dark:bg-green-900/50 hover:bg-green-200 dark:hover:bg-green-900 text-green-700 dark:text-green-400 font-bold py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-green-200 dark:border-green-800">
+                              <i data-lucide="phone" className="w-4 h-4"></i> Call
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ================= PROFILE & CLINIC TAB ================= */}
+              {activeTab === 'profile' && (
+                <div className="animate-fade-in space-y-5">
+                  <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 dark:bg-amber-500/5 rounded-bl-full -z-0"></div>
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-teal-600/10 dark:bg-teal-600/5 rounded-full -z-0"></div>
+                    
+                    <div className="relative z-10 text-center">
+                      <div className="w-24 h-24 bg-green-100 dark:bg-green-900/50 rounded-full mx-auto mb-4 flex items-center justify-center text-green-600 dark:text-green-500 border-4 border-white dark:border-slate-800 shadow-lg">
+                        <i data-lucide="user-circle" className="w-16 h-16"></i>
+                      </div>
+                      <h2 className="text-2xl font-black text-slate-800 dark:text-white">Dr. Danish Deshmukh <span className="text-lg text-teal-600 dark:text-teal-400">(PT)</span></h2>
+                      <p className="text-slate-600 dark:text-slate-300 font-bold mt-1">Consultant Physiotherapist</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">(B.P.TH, M.U.H.S)-Mumbai</p>
+                      
+                      <div className="inline-block mt-3 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-600">
+                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <i data-lucide="award" className="w-3 h-3 text-amber-500"></i> Reg. No. 2024/07/PT/13009
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-teal-700 to-teal-900 rounded-3xl p-6 shadow-lg text-white border border-teal-600 relative overflow-hidden">
+                    <div className="absolute right-0 bottom-0 opacity-10">
+                      <i data-lucide="activity" className="w-48 h-48"></i>
+                    </div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-5 border-b border-teal-500/50 pb-4">
+                        <div className="bg-white p-2 rounded-xl text-green-600">
+                          <i data-lucide="activity" className="w-8 h-8"></i>
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black tracking-wide">NEXUS</h3>
+                          <p className="text-amber-400 text-xs font-bold uppercase tracking-widest">Physiotherapy Clinic</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 mb-5">
+                        <p className="flex items-start gap-3 text-sm">
+                          <i data-lucide="map-pin" className="w-5 h-5 text-amber-400 shrink-0"></i>
+                          <span className="leading-snug text-teal-50">Shop No.8, Gr. Floor, Mahindra Happinest, Bhiwandi Bypass, Rajnoli.</span>
+                        </p>
+                        <p className="flex items-center gap-3 text-sm">
+                          <i data-lucide="phone" className="w-5 h-5 text-amber-400 shrink-0"></i>
+                          <span className="font-bold text-teal-50">77588 09434</span>
+                        </p>
+                        <p className="flex items-center gap-3 text-sm">
+                          <i data-lucide="mail" className="w-5 h-5 text-amber-400 shrink-0"></i>
+                          <span className="text-teal-50">nexusphysiotherapyclinic@gmail.com</span>
+                        </p>
+                      </div>
+
+                      <div className="bg-teal-900/50 rounded-2xl p-4 border border-teal-600/50">
+                        <p className="text-xs font-bold text-teal-300 uppercase tracking-wider mb-2 border-b border-teal-700/50 pb-2">Treatment Approach</p>
+                        <ul className="text-sm text-teal-50 space-y-1.5">
+                          {['Medicine-free Treatment', 'No Side Effects', 'Advanced Machine Treatment', 'Effective Exercise Treatment', 'Long Term Relief'].map((item, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <i data-lucide="check-circle" className="w-3.5 h-3.5 text-green-400"></i> {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Cases</p>
+                        <p className="text-2xl font-black text-slate-800 dark:text-white">124</p>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Earned</p>
+                        <p className="text-2xl font-black text-green-600 dark:text-green-500 flex items-center justify-center"><i data-lucide="indian-rupee" className="w-5 h-5"></i>45k+</p>
+                      </div>
+                  </div>
+                </div>
+              )}
+            </main>
+
+            {/* BOTTOM NAVIGATION */}
+            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-safe absolute bottom-0 w-full z-10 flex justify-around transition-colors duration-300 shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.5)]">
+              <button 
+                onClick={() => setActiveTab('home')}
+                className={`flex flex-col items-center p-2 rounded-xl transition-all ${activeTab === 'home' ? 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 w-20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 w-16'}`}
+              >
+                <i data-lucide="home" className={`w-6 h-6 mb-1 transition-all ${activeTab === 'home' ? 'fill-teal-100 dark:fill-teal-900' : ''}`}></i>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${activeTab === 'home' ? 'block' : 'hidden'}`}>Board</span>
+              </button>
+              
+              <button 
+                onClick={() => setActiveTab('schedule')}
+                className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${activeTab === 'schedule' ? 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 w-24' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 w-16'}`}
+              >
+                <i data-lucide="calendar" className={`w-6 h-6 mb-1 transition-all ${activeTab === 'schedule' ? 'fill-teal-100 dark:fill-teal-900' : ''}`}></i>
+                {acceptedVisits.length > 0 && (
+                  <span className="absolute top-1 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></span>
+                )}
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${activeTab === 'schedule' ? 'block' : 'hidden'}`}>My Visits</span>
+              </button>
+
+              <button 
+                onClick={() => setActiveTab('profile')}
+                className={`flex flex-col items-center p-2 rounded-xl transition-all ${activeTab === 'profile' ? 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 w-20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 w-16'}`}
+              >
+                <i data-lucide="user" className={`w-6 h-6 mb-1 transition-all ${activeTab === 'profile' ? 'fill-teal-100 dark:fill-teal-900' : ''}`}></i>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${activeTab === 'profile' ? 'block' : 'hidden'}`}>Clinic</span>
+              </button>
+            </nav>
+
+            <style>{`
+              .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
+              .scrollbar-hide::-webkit-scrollbar { display: none; }
+              .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+              @keyframes fade-in {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              .animate-fade-in {
+                animation: fade-in 0.3s ease-out forwards;
+              }
+            `}</style>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
